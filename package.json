@@ -1,0 +1,19 @@
+{
+  "name": "hhstats",
+  "version": "1.0.0",
+  "description": "Parse stats for PokerStars play money hand history",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "private": true,
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "fs": "0.0.1-security",
+    "lodash": "^4.17.15"
+  }
+}
