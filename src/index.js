@@ -14,6 +14,7 @@ for (let i = 0; i < args.length; i++) {
         params.unknownLines = true;
     }
     if (args[i] === '-unknownLines') params.unknownLines = true;
+    if (args[i] === '-dynamics') params.dynamics = true;
     if (args[i] === '-trace') {
         params.trace = args[++i];
     }
@@ -24,6 +25,7 @@ function printHelp() {
     console.log('npm start -- "hh.txt" -buyins                  : to show the summary');
     console.log('npm start -- "hh.txt" -verbose                 : debugging');
     console.log('npm start -- "hh.txt" -verbose -trace Batman   : debugging one player');
+    console.log('npm start -- "hh.txt" -dynamics > output.csv   : show stack dynamics to plot a graph');
     console.log('If you need other help please call Batman.');
     return 0;
 }

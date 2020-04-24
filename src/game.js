@@ -74,6 +74,7 @@ class GamePlayer {
         this.collectedFromPot = 0;
         this.rake = 0;
         this.allin = false;
+        this.aggregatedResult = 0;
     }
 
     pay(sum, isRaise) {
@@ -111,3 +112,4 @@ const STREETS = Object.freeze({
 
 module.exports.Game = Game;
 module.exports.STREETS = STREETS;
+module.exports.GamePlayer = GamePlayer;
