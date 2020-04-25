@@ -27,7 +27,7 @@ class Game {
     payBigBlind(nick, sum) {
         let player = this.player(nick);
         // only the first bb is real sb and deductible from the following raises
-        player.payBlind(sum, this.bb === 0);
+        player.payBlind(sum, true);
         this.bb = sum;
     }
 
@@ -46,10 +46,17 @@ class Game {
     addPotAndRake(pot, rake) {
         this.totalPot = pot;
         this.rake = rake;
+        let distributedRake = 0, rakeShare;
         _.filter(this.players, player => player.collected)
             .forEach(player => {
-                player.rake = Math.round(player.collectedFromPot / (pot - rake) * rake)
+                rakeShare = Math.round(player.collectedFromPot / (pot - rake) * rake);
+                player.rake = rakeShare;
+                distributedRake += rakeShare;
             });
+        if (rake - distributedRake === 1) {
+            // rounding error, goes to the first player
+            (_.find(this.players, p => p.rake) || {}).rake++;
+        }
     }
 
     print() {

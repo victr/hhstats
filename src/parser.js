@@ -11,7 +11,7 @@ class Parser {
         this.unknownLines = [];
         this.parse(data);
         this.curGame = undefined;
-        this.prevGame = undefined;
+        this.prevHand = undefined;
     }
 
     parse(data) {
@@ -40,7 +40,7 @@ class Parser {
         } else if (PATTERNS[lineType] === PATTERNS.EMPTY) {
             if (this.curGame) {
                 this.stats.addGame(this.curGame);
-                this.prevGame = this.curGame;
+                this.prevHand = this.curGame;
                 this.curGame = undefined;
             }
         } else if (PATTERNS[lineType] === PATTERNS.SMALL_BLIND) {

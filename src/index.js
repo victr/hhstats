@@ -15,10 +15,11 @@ for (let i = 0; i < args.length; i++) {
     }
     if (args[i] === '-unknownLines') params.unknownLines = true;
     if (args[i] === '-dynamics') params.dynamics = true;
+    if (args[i] === '-buyins') params.buyins = true;
+    if (args[i] === '-usetabs') params.useTabs = true;
     if (args[i] === '-trace') {
         params.trace = args[++i];
     }
-    if (args[i] === '-buyins') params.buyins = true;
 }
 
 function printHelp() {

@@ -11,6 +11,9 @@ class Stats {
         this.totalRake = 0;
         this.buyins = [];
         this.missedHands = [];
+        this.mismatchedHands = [];
+        this.totalSum = 0;
+        this.prevTotalSum = 0;
     }
 
     addGame(game) {
@@ -18,7 +21,7 @@ class Stats {
     }
 
     calculate() {
-        let prevGame;
+        let prevHand;
         this.games.forEach(game => {
             let newBuyIns = 0, negativeBuyIn = false;
             _.forEach(game.players, (gamePlayer, nick) => {
@@ -39,26 +42,32 @@ class Stats {
                     });
                 }
                 if (gamePlayer.initialChipCount - player.prevChipCount < 0) negativeBuyIn = true;
-                if (gamePlayer.initialChipCount - player.prevChipCount > 0 &&
-                    gamePlayer.initialChipCount !== (game.bb * 100)) newBuyIns++;
+                if (gamePlayer.initialChipCount - player.prevChipCount > 0) newBuyIns++;
                 gamePlayer.prevChipCount = player.prevChipCount;
                 player.buyin += gamePlayer.initialChipCount - player.prevChipCount;
                 player.prevChipCount = gamePlayer.initialChipCount - gamePlayer.payed + gamePlayer.collected;
                 player.cashout = player.prevChipCount;
                 gamePlayer.aggregatedResult = player.cashout - player.buyin + player.rake;
+                this.totalSum += gamePlayer.aggregatedResult;
                 player.lastGameID = game.id;
             });
-            this.totalRake += game.rake;
-            if (negativeBuyIn || newBuyIns > (game.players.length / 2)) {
-                this.missedHands.push({
-                    players: _.map(game.players, (p, nick) => new Object({
-                        nick: nick, prevChipCount: p.prevChipCount, initialChipCount: p.initialChipCount
-                    })),
-                    prevGame: prevGame || game,
-                    nextGame: game
+            this.totalSum = _.reduce(this.players, (a, p) => a + p.cashout - p.buyin + p.rake, 0);
+            if (this.totalSum !== this.prevTotalSum) {
+                this.prevTotalSum = this.totalSum;
+                this.mismatchedHands.push({
+                    prevHand: prevHand || game,
+                    curHand: game,
+                    allAggregatedResults: _.reduce(this.players, (a, p, nick) => {
+                        a[nick] = p.cashout - p.buyin + p.rake;
+                        return a;
+                    }, {})
                 });
             }
-            prevGame = game;
+            this.totalRake += game.rake;
+            if (negativeBuyIn || newBuyIns > (game.players.length / 2)) {
+                this.missedHands.push({prevHand: prevHand || game, curHand: game});
+            }
+            prevHand = game;
         });
         this.totalBank += _.reduce(this.players, (a, p) => a + p.buyin, 0);
     }
@@ -84,6 +93,7 @@ class Stats {
             console.log(this);
         }
         console.log(this.missedHands);
+        console.log(this.mismatchedHands);
     }
 
     printSummary() {
@@ -104,22 +114,11 @@ class Stats {
         });
         if (this.missedHands.length > 0) {
             console.log('\nSome hands are likely missed in the history!\nThese are unexpected changes in the stacks in between two hands:'.red);
-            this.missedHands.forEach(missedHand => {
-                console.log(`Between hand #%s (%s) and #%s (%s):`.cyan,
-                    missedHand.prevGame.id, missedHand.prevGame.datetime,
-                    missedHand.nextGame.id, missedHand.nextGame.datetime);
-                missedHand.players.forEach(p => {
-                    console.log('%s\t%i\t%s\t> %i',
-                        this.nickWithTabs(p.nick, nickTabs),
-                        this.spaceToRight(p.prevChipCount, 1),
-                        this.spaceToRight((p.prevChipCount > p.initialChipCount)
-                            ? '+'.concat(p.prevChipCount - p.initialChipCount)
-                            : (p.prevChipCount - p.initialChipCount),
-                            1),
-                        this.spaceToRight(p.initialChipCount, 1)
-                    );
-                });
-            });
+            this.printMissedHands(nickTabs);
+        }
+        if (this.mismatchedHands.length > 0) {
+            console.log('\nThe total sum mismatch: %s'.red, this.totalSum);
+            this.printMismatchedHands(nickTabs);
         }
         if (this.params.buyins) {
             console.log('\nBuy-ins:'.yellow);
@@ -130,19 +129,79 @@ class Stats {
         }
     }
 
+    printMismatchedHands(nickTabs) {
+        this.mismatchedHands.forEach(hand => {
+            console.log(`Mismatched hand #%s (%s):`.yellow, hand.curHand.id, hand.curHand.datetime);
+            console.log('%s\t initial   payed collect    rake   chips   total', this.nickWithTabs('player', nickTabs));
+            let sums = {payed: 0, collected: 0, rake: 0, total: 0};
+            _.forEach(this.players, (p, nick) => {
+                if (hand.curHand.players[nick]) {
+                    let gp = hand.curHand.players[nick];
+                    console.log('%s\t%s%s%s%s%s%s',
+                        this.nickWithTabs(nick, nickTabs),
+                        this.spaceToRight(gp.initialChipCount, 1),
+                        this.spaceToRight('-' + gp.payed, 1),
+                        this.spaceToRight('+' + gp.collected, 1),
+                        this.spaceToRight(gp.rake, 1),
+                        this.spaceToRight(gp.initialChipCount - gp.payed + gp.collected, 1),
+                        this.spaceToRight(gp.aggregatedResult, 1)
+                    );
+                    sums.payed += gp.payed;
+                    sums.collected += gp.collected;
+                    sums.rake += gp.rake;
+                    sums.total += gp.aggregatedResult;
+                } else {
+                    console.log('%s\t\t\t\t\t\t%s',
+                        this.nickWithTabs(nick, nickTabs),
+                        this.spaceToRight(hand.allAggregatedResults[nick] || 0, 1)
+                    );
+                    sums.total += hand.allAggregatedResults[nick] || 0;
+                }
+            });
+            console.log('\t'.repeat(nickTabs) + '\t\t%s%s%s\t%s',
+                this.spaceToRight(sums.payed, 1),
+                this.spaceToRight(sums.collected, 1),
+                this.spaceToRight(sums.rake, 1),
+                this.spaceToRight(sums.total, 1)
+            );
+        });
+    }
+
+    printMissedHands(nickTabs) {
+        this.missedHands.forEach(hand => {
+            console.log(`Between hand #%s (%s) and #%s (%s):`.cyan,
+                hand.prevHand.id, hand.prevHand.datetime,
+                hand.curHand.id, hand.curHand.datetime);
+            _.forEach(hand.curHand.players, (p, nick) => {
+                console.log('%s\t%i\t%s\t> %i',
+                    this.nickWithTabs(nick, nickTabs),
+                    this.spaceToRight(p.prevChipCount, 1),
+                    this.spaceToRight((p.prevChipCount > p.initialChipCount)
+                        ? '+'.concat(p.prevChipCount - p.initialChipCount)
+                        : (p.prevChipCount - p.initialChipCount),
+                        1),
+                    this.spaceToRight(p.initialChipCount, 1)
+                );
+            });
+        });
+    }
+
     printDynamics() {
+        let separator = this.params.useTabs ? '\t' : ',';
         console.log(
-            _.reduce(this.players, (a, p, nick) => a + nick + ',', 'game,')
+            _.reduce(this.players, (a, p, nick) => a + nick + separator, 'game' + separator)
         );
         this.games.forEach(game => {
             console.log(
                 _.reduce(this.players, (a, p, nick) => {
                     let gamePlayer = game.players[nick] || {};
-                    if (p.lastGameID === game.id) p.leftTable = true;
-                    return a + (p.leftTable
+                    a = a + (p.leftTable
                         ? ''
-                        : (gamePlayer.aggregatedResult || '')) + ',';
-                }, game.id + ',')
+                        : (gamePlayer.aggregatedResult || '')
+                    ) + separator;
+                    if (p.lastGameID === game.id) p.leftTable = true;
+                    return a;
+                }, game.id + separator)
             );
         });
     }
