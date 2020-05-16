@@ -53,9 +53,9 @@ class Game {
                 player.rake = rakeShare;
                 distributedRake += rakeShare;
             });
-        if (rake - distributedRake === 1) {
+        if (rake - distributedRake !== 0) {
             // rounding error, goes to the first player
-            (_.find(this.players, p => p.rake) || {}).rake++;
+            (_.find(this.players, p => p.rake) || {}).rake += rake - distributedRake;
         }
     }
 
@@ -82,6 +82,7 @@ class GamePlayer {
         this.rake = 0;
         this.allin = false;
         this.aggregatedResult = 0;
+        this.joinedTable = false;
     }
 
     pay(sum, isRaise) {

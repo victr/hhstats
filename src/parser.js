@@ -72,6 +72,10 @@ class Parser {
             this.curGame.addPotAndRake(parseFloat(matched[1]), parseFloat(matched[2]))
         } else if (PATTERNS[lineType] === PATTERNS.UNCALLED_BET) {
             this.curGame.player(matched[2]).collect(parseFloat(matched[1]));
+        } else if (PATTERNS[lineType] === PATTERNS.JOIN_TABLE) {
+            this.curGame.player(matched[1]).joinedTable = true;
+        } else if (PATTERNS[lineType] === PATTERNS.RESET) {
+            this.stats.addGame(undefined);
         }
     }
 
@@ -85,7 +89,7 @@ const PATTERNS = Object.freeze({
     SMALL_BLIND: /^(.+): posts small blind ([0-9]+)$/,
     BIG_BLIND: /^(.+): posts big blind ([0-9]+)$/,
     BOTH_BLINDS: /^(.+): posts small & big blinds ([0-9]+)$/,
-    HOLE_CARDS: /^\*\*\* HOLE CARDS \*\*\*$/,
+    HOLE_CARDS: /^(\*)+ HOLE CARDS (\*)+$/,
     DEALT: /^Dealt to /,
     FOLDS: /^(.+): folds/,
     CHECKS: /^(.+): checks$/,
@@ -96,12 +100,13 @@ const PATTERNS = Object.freeze({
     TIMEOUT: /^(.+) has timed out$/,
     NO_HAND: /^(.+): doesn't show hand$/,
     MUCK_HAND: /^(.+): mucks hand$/,
-    FLOP: /^\*\*\* FLOP \*\*\*/,
-    TURN: /^\*\*\* TURN \*\*\*/,
-    RIVER: /^\*\*\* RIVER \*\*\*/,
-    SHOW_DOWN: /^\*\*\* SHOW DOWN \*\*\*/,
-    SUMMARY: /^\*\*\* SUMMARY \*\*\*/,
+    FLOP: /^(\*)+ FLOP (\*)+/,
+    TURN: /^(\*)+ TURN (\*)+/,
+    RIVER: /^(\*)+ RIVER (\*)+/,
+    SHOW_DOWN: /^(\*)+ SHOW DOWN (\*)+/,
+    SUMMARY: /^(\*)+ SUMMARY (\*)+/,
     SHOWS: /^(.+): shows \[([2-9TJQKA][scdh]) ([2-9TJQKA][scdh])]/,
+    SHOWS_ONE: /^(.+): shows \[([2-9TJQKA][scdh])]/,
     COLLECTED: /^(.+) collected ([0-9]+) from (side |main )?pot$/,
     TOTAL_POT: /^Total pot ([0-9]+).* \| Rake ([0-9]+)$/,
     BOARD: /^Board \[/,
@@ -109,11 +114,12 @@ const PATTERNS = Object.freeze({
     SAID: /^(.+) said, "/,
     DISCONNECTED: /^(.+) is disconnected$/,
     CONNECTED: /^(.+) is connected$/,
-    TIMEOUT_DISCONNECT: /^(.+) has timed out while disconnected$/,
+    TIMEOUT_DISCONNECT: /^(.+) has timed out while (being )?disconnected$/,
     SITTING_OUT: /^(.+) is sitting out$/,
     LEAVES: /^(.+) leaves the table$/,
     REMOVED_FROM_TABLE: /^(.+) was removed from the table for failing to post$/,
-    EMPTY: /^$/
+    EMPTY: /^$/,
+    RESET: /^RESET$/
 });
 
 module.exports = Parser;
