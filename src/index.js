@@ -17,6 +17,7 @@ for (let i = 0; i < args.length; i++) {
     if (args[i] === '-dynamics') params.dynamics = true;
     if (args[i] === '-buyins') params.buyins = true;
     if (args[i] === '-usetabs') params.useTabs = true;
+    if (args[i] === '-convert') params.convert = true;
     if (args[i] === '-trace') {
         params.trace = args[++i];
     }
@@ -36,10 +37,25 @@ if (!params.input) return console.error(colors.red('Missing input file with hand
 fs.readFile(params.input, 'utf8', function (err, data) {
     if (err) {
         return console.error(colors.red(err));
+    } else if (params.convert) {
+        convert(data);
     } else {
         exec(data);
     }
 });
+
+function convert(data) {
+    data.split('\n')
+        .map(line => line
+            .replace(/\(([0-9]+)\/([0-9]+)\)/, '($$$1/$$$2)')
+            .replace(/\(([0-9]+) in chips\)/, '($$$1 in chips)')
+            .replace(/(blind|blinds|calls|bets|pot|Rake|collected) ([0-9]+)/, '$1 $$$2')
+            .replace(/(bet|collected|won) \(([0-9]+)\)/, '$1 ($$$2)')
+            .replace(/raises ([0-9]+) to ([0-9]+)/, 'raises $$$1 to $$$2')
+            .replace(/(\(Play Money\) |Home Game )/, '')
+        )
+        .forEach(line => console.log(line));
+}
 
 // process hand history
 function exec(data) {

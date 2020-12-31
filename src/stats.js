@@ -126,7 +126,7 @@ class Stats {
     printSummary() {
         let nickTabs = _.reduce(this.players, (a, p, nick) => Math.max(a, Math.floor(nick.length / 8)), 1);
         console.log(colors.cyan(this.nickWithTabs('Player', nickTabs) +
-            '\tplayed\tvpip\twon\twon %\tall-in\t   buyin cashout     net    rake   gross'));
+            '\tplayed\tvpip\twon\twon %\tall-in\t   buyin cashout    rake    net    gross'));
         let nicks = Object.keys(this.players).sort((a, b) =>
             (this.players[b].cashout - this.players[b].buyin + this.players[b].rake) -
             (this.players[a].cashout - this.players[a].buyin + this.players[a].rake)
@@ -139,8 +139,8 @@ class Stats {
                 p.handsWon, Math.round(p.handsWon / p.handsVPIP * 100), p.handsAllIn,
                 this.spaceToRight(p.buyin, 1),
                 this.spaceToRight(p.cashout, 1),
-                this.spaceToRight(p.cashout - p.buyin, 1),
                 this.spaceToRight(p.rake, 1),
+                this.spaceToRight(p.cashout + p.rake, 1),
                 this.spaceToRight(p.cashout - p.buyin + p.rake, 1)
             );
         });

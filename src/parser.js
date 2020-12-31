@@ -107,7 +107,7 @@ const PATTERNS = Object.freeze({
     SUMMARY: /^(\*)+ SUMMARY (\*)+/,
     SHOWS: /^(.+): shows \[([2-9TJQKA][scdh]) ([2-9TJQKA][scdh])]/,
     SHOWS_ONE: /^(.+): shows \[([2-9TJQKA][scdh])]/,
-    COLLECTED: /^(.+) collected ([0-9]+) from (side |main )?pot$/,
+    COLLECTED: /^(.+) collected ([\-0-9]+) from (side |main )?pot$/,
     TOTAL_POT: /^Total pot ([0-9]+).* \| Rake ([0-9]+)$/,
     BOARD: /^Board \[/,
     SEAT_SUMMARY: /^Seat [0-9]+: (.+) (\(button\) |\(small blind\) |\(big blind\) )?(folded|showed|mucked|collected)/,
